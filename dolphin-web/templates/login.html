@@ -1,188 +1,160 @@
-{% extends 'base.html' %}
-{% block title %}Sign In · Lost & Found{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Lost & Found</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0C2340 0%, #1A3A5C 100%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .page {
+      width: 100%; max-width: 420px;
+      display: flex; flex-direction: column; align-items: center; gap: 32px;
+    }
 
-{% block head %}
-<style>
-  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding-top: 0; }
-  .login-bg {
-    position: fixed; inset: 0;
-    background: linear-gradient(160deg, var(--primary) 0%, var(--primary-light) 100%);
-    z-index: -1;
-  }
-  .login-wrap {
-    width: 100%;
-    max-width: 400px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-    align-items: center;
-  }
-  .login-logo {
-    text-align: center;
-  }
-  .login-logo-icon {
-    font-size: 56px;
-    margin-bottom: 12px;
-  }
-  .login-logo h1 {
-    font-size: 32px;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.8px;
-  }
-  .login-logo p {
-    font-size: 15px;
-    color: rgba(255,255,255,0.7);
-    margin-top: 4px;
-    font-weight: 500;
-  }
-  .login-card {
-    background: var(--surface);
-    border-radius: var(--radius-xl);
-    padding: 32px 28px;
-    width: 100%;
-    box-shadow: var(--shadow-lg);
-  }
-  .login-card h2 {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--text-primary);
-    text-align: center;
-    margin-bottom: 6px;
-  }
-  .login-card p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    text-align: center;
-    line-height: 1.5;
-    margin-bottom: 24px;
-  }
-  .btn-google {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    padding: 14px;
-    background: var(--primary);
-    color: #fff;
-    border-radius: var(--radius-lg);
-    font-size: 16px;
-    font-weight: 700;
-    transition: background .15s;
-    box-shadow: var(--shadow-md);
-    cursor: pointer;
-    border: none;
-  }
-  .btn-google:hover { background: var(--primary-light); }
-  .btn-google:disabled { opacity: .6; cursor: not-allowed; }
-  .google-g {
-    width: 28px; height: 28px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 800;
-  }
-  .login-divider {
-    display: flex; align-items: center; gap: 12px;
-    margin: 20px 0;
-  }
-  .login-divider hr { flex: 1; border: none; border-top: 1px solid var(--border); }
-  .login-divider span { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-  .login-info {
-    font-size: 12px;
-    color: var(--text-muted);
-    text-align: center;
-    line-height: 1.6;
-  }
-  .login-error {
-    background: var(--lost-bg);
-    color: var(--lost-text);
-    border-radius: var(--radius-md);
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-    display: none;
-    margin-bottom: 12px;
-  }
-</style>
-{% endblock %}
+    /* Logo area */
+    .logo-wrap { text-align: center; }
+    .logo-title { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+    .logo-sub   { font-size: 16px; color: rgba(255,255,255,.8); margin-top: 4px; font-weight: 500; }
 
-{% block content %}
-<div class="login-bg"></div>
-<div class="login-wrap">
-  <div class="login-logo">
-    <div class="login-logo-icon">🐬</div>
-    <h1>Lost &amp; Found</h1>
-    <p>Chadwick International</p>
-  </div>
+    /* Card */
+    .card {
+      width: 100%; background: #fff; border-radius: 20px;
+      padding: 32px; box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    }
+    .card-title {
+      font-size: 22px; font-weight: 700; color: #0C2340;
+      text-align: center; margin-bottom: 8px;
+    }
+    .card-sub {
+      font-size: 14px; color: #4A5E78; text-align: center;
+      margin-bottom: 24px; line-height: 1.5;
+    }
 
-  <div class="login-card">
-    <h2>Welcome</h2>
-    <p>Sign in with your school account to report or find lost items.</p>
+    /* Google button */
+    .google-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: #0C2340; color: #fff; border: none; border-radius: 14px;
+      padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
+      font-family: inherit; box-shadow: 0 4px 12px rgba(12,35,64,.2);
+    }
+    .google-btn:hover { background: #1A3A5C; }
+    .google-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .google-icon {
+      font-size: 18px; font-weight: 700; color: #fff;
+      background: rgba(255,255,255,.15); width: 28px; height: 28px;
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
 
-    <div class="login-error" id="err-msg"></div>
+    /* Divider */
+    .divider { display: flex; align-items: center; margin: 20px 0; gap: 12px; }
+    .divider-line { flex: 1; height: 1px; background: #D8DFE9; }
+    .divider-text { font-size: 12px; color: #8A9BB5; white-space: nowrap; }
 
-    <button class="btn-google" id="sign-in-btn" onclick="signInWithGoogle()">
-      <div class="google-g">G</div>
-      Continue with Google
-    </button>
+    /* Info */
+    .info { font-size: 12px; color: #4A5E78; text-align: center; line-height: 1.5; }
 
-    <div class="login-divider">
-      <hr /><span>School accounts only</span><hr />
+    /* Error */
+    .error-msg {
+      background: #FEF2F2; border: 1px solid #FECACA;
+      color: #DC2626; border-radius: 10px; padding: 12px;
+      font-size: 13px; font-weight: 600; margin-top: 16px;
+      display: none; text-align: center;
+    }
+    .error-msg.show { display: block; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: #1E293B; color: #fff; border-radius: 999px;
+      padding: 10px 20px; font-size: 14px; font-weight: 600;
+      opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="logo-wrap">
+      <p class="logo-title">🐬 Lost & Found</p>
+      <p class="logo-sub">Chadwick International</p>
     </div>
 
-    <p class="login-info">
-      Only @chadwickschool.org accounts can access this app.<br>
-      Your real name is displayed for accountability.
-    </p>
+    <div class="card">
+      <h1 class="card-title">Welcome</h1>
+      <p class="card-sub">Sign in with your school account to report or find lost items.</p>
+
+      <button class="google-btn" id="loginBtn" onclick="handleGoogleLogin()">
+        <span class="google-icon">G</span>
+        Continue with Google
+      </button>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <span class="divider-text">School email only</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <p class="info">Only @chadwickschool.org accounts can access this app. Your real name is displayed for accountability.</p>
+
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
   </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-<script type="module">
-  import { GoogleAuthProvider, signInWithPopup }
-    from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+  <div id="toast"></div>
 
-  window.signInWithGoogle = async function() {
-    const btn = document.getElementById('sign-in-btn');
-    const err = document.getElementById('err-msg');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Signing in…';
-    err.style.display = 'none';
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
 
-    try {
-      await new Promise(r => {
-        if (window._fb) return r();
-        window.addEventListener('firebase-ready', r, { once: true });
-      });
+    const cfg = {{ firebase_cfg | safe }};
+    const app  = initializeApp(cfg);
+    const auth = getAuth(app);
 
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ hd: 'chadwickschool.org' });
-      const result = await signInWithPopup(window._fb.auth, provider);
-      const idToken = await result.user.getIdToken();
+    window.handleGoogleLogin = async function() {
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('errorMsg');
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+      err.classList.remove('show');
 
-      const res = await fetch('/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await res.json();
+      try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const result   = await signInWithPopup(auth, provider);
+        const idToken  = await result.user.getIdToken();
 
-      if (data.success) {
-        window.location.href = '/';
-      } else {
-        throw new Error(data.error || 'Sign-in failed');
+        const r = await fetch('/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+        const data = await r.json();
+
+        if (data.success) {
+          location.href = '/';
+        } else {
+          err.textContent = data.error || 'Access denied.';
+          err.classList.add('show');
+          btn.disabled = false;
+          btn.innerHTML = '<span class="google-icon">G</span> Continue with Google';
+        }
+      } catch(e) {
+        if (e.code !== 'auth/popup-closed-by-user') {
+          err.textContent = e.message || 'Login failed.';
+          err.classList.add('show');
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<span class="google-icon">G</span> Continue with Google';
       }
-    } catch (e) {
-      err.textContent = e.message || 'Sign-in failed. Please try again.';
-      err.style.display = 'block';
-      btn.disabled = false;
-      btn.innerHTML = '<div class="google-g">G</div> Continue with Google';
-    }
-  };
-</script>
-{% endblock %}
+    };
+  </script>
+</body>
+</html>

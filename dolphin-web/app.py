@@ -257,6 +257,7 @@ def edit_post(post_id):
     if post.get("authorId") != user["uid"] and not user["is_admin"]:
         return redirect(url_for("detail", post_id=post_id))
     return render_template("post.html", user=user, post=post,
+                           post_json=json.dumps(post),
                            firebase_cfg=firebase_cfg())
 
 

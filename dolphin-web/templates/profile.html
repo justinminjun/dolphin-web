@@ -1,292 +1,196 @@
-{% extends 'base.html' %}
-{% block title %}Profile · Lost & Found{% endblock %}
-
-{% block head %}
-<style>
-  .profile-page {
-    max-width: 680px;
-    margin: 0 auto;
-    padding-bottom: 40px;
-  }
-
-  /* ── PROFILE HEADER ─────────────────────────────────────────────── */
-  .profile-header {
-    background: var(--surface);
-    padding: 24px 20px 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    box-shadow: var(--shadow-sm);
-  }
-  .profile-avatar {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    background: var(--primary);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px; font-weight: 800; color: #fff;
-    overflow: hidden;
-    flex-shrink: 0;
-    border: 3px solid var(--border);
-  }
-  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .profile-info { flex: 1; }
-  .profile-name {
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-bottom: 2px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .profile-email { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
-
-  /* ── STATS ROW ───────────────────────────────────────────────────── */
-  .stats-row {
-    display: flex;
-    background: var(--surface);
-    border-top: 1px solid var(--border-light);
-    margin-top: 1px;
-  }
-  .stat-item {
-    flex: 1;
-    padding: 16px;
-    text-align: center;
-    border-right: 1px solid var(--border-light);
-  }
-  .stat-item:last-child { border-right: none; }
-  .stat-value {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-bottom: 2px;
-  }
-  .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-
-  /* ── SIGN OUT ────────────────────────────────────────────────────── */
-  .signout-btn {
-    display: block;
-    margin: 16px 16px 0;
-    padding: 12px;
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    border: 1.5px solid var(--border);
-    text-align: center;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--danger);
-    cursor: pointer;
-    transition: background .12s;
-  }
-  .signout-btn:hover { background: var(--lost-bg); }
-
-  /* ── MY POSTS ────────────────────────────────────────────────────── */
-  .section-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-primary);
-    padding: 20px 16px 12px;
-  }
-  .posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
-    padding: 0 16px;
-  }
-  .mini-card {
-    background: var(--surface);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    cursor: pointer;
-    transition: transform .15s, box-shadow .15s;
-  }
-  .mini-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-  .mini-card.resolved { opacity: 0.6; }
-
-  .mini-img-wrap {
-    position: relative;
-    width: 100%;
-    padding-top: 75%;
-    background: var(--surface-alt);
-    overflow: hidden;
-  }
-  .mini-img-wrap img {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-  }
-  .mini-no-img {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 28px; color: var(--text-muted);
-  }
-  .mini-badge {
-    position: absolute;
-    top: 6px; left: 6px;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: var(--radius-full);
-  }
-  .mini-badge-lost     { background: var(--lost-bg);  color: var(--lost-text); }
-  .mini-badge-found    { background: var(--found-bg); color: var(--found-text); }
-  .mini-badge-resolved { background: #ECFDF5; color: #059669; }
-
-  .mini-body { padding: 8px 10px; }
-  .mini-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    margin-bottom: 2px;
-  }
-  .mini-time  { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
-  .mini-delete {
-    display: inline-block;
-    background: var(--lost-bg);
-    color: var(--danger);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: none;
-    transition: background .12s;
-  }
-  .mini-delete:hover { background: #FEE2E2; }
-</style>
-{% endblock %}
+{% extends "base.html" %}
+{% block title %}Profile — Lost & Found{% endblock %}
 
 {% block content %}
-<div class="profile-page">
-  <!-- HEADER -->
-  <div class="profile-header">
-    <div class="profile-avatar" id="p-avatar">
-      {% if user.photo %}
-        <img src="{{ user.photo }}" alt="{{ user.name }}" />
-      {% else %}
-        {{ user.name[0]|upper }}
+<div style="max-width:640px;margin:0 auto;background:#fff;min-height:100vh">
+<style>
+  /* ── HEADER ──────────────────────────────────── */
+  .profile-header {
+    display: flex; align-items: center; padding: 24px 16px;
+    background: var(--surface); box-shadow: var(--shadow-sm);
+  }
+  .profile-avatar-wrap { position: relative; cursor: pointer; flex-shrink: 0; }
+  .profile-avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; color: #fff;
+    overflow: hidden;
+  }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .edit-badge {
+    position: absolute; bottom: -2px; right: -2px;
+    background: var(--primary); color: #fff;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: var(--radius-full);
+    border: 2px solid #fff;
+  }
+  .profile-info { flex: 1; margin-left: 16px; }
+  .profile-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+  .profile-name { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .admin-badge {
+    background: #1E1B4B; color: #C4B5FD;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 6px;
+  }
+  .profile-email { font-size: 14px; color: var(--text-muted); }
+
+  /* ── SIGN OUT ────────────────────────────────── */
+  .signout-btn {
+    display: block; width: calc(100% - 32px); margin: 16px;
+    background: var(--surface-alt); border: none; border-radius: var(--radius-lg);
+    padding: 12px; font-size: 16px; font-weight: 600;
+    color: var(--danger); cursor: pointer; text-align: center;
+    font-family: inherit;
+  }
+  .signout-btn:hover { background: #FEF2F2; }
+
+  /* ── MY POSTS ────────────────────────────────── */
+  .section-title {
+    font-size: 17px; font-weight: 600; color: var(--text-primary);
+    padding: 0 16px; margin-bottom: 8px;
+  }
+  .posts-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; padding: 0 16px 40px;
+  }
+
+  .mini-card {
+    background: var(--surface); border-radius: var(--radius-lg);
+    overflow: hidden; box-shadow: var(--shadow-sm);
+    cursor: pointer; text-decoration: none; display: block;
+  }
+  .mini-card:hover { opacity: .9; }
+  .mini-img-wrap { position: relative; }
+  .mini-img {
+    width: 100%; height: 120px; object-fit: cover; display: block;
+    background: var(--surface-alt);
+  }
+  .mini-no-img {
+    width: 100%; height: 120px; background: var(--surface-alt);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .mini-badge {
+    position: absolute; top: 6px; left: 6px;
+    padding: 2px 6px; border-radius: var(--radius-sm);
+    font-size: 10px; font-weight: 600;
+  }
+  .mini-badge.found    { background: var(--found-bg); color: var(--found-text); }
+  .mini-badge.lost     { background: var(--lost-bg);  color: var(--lost-text); }
+  .mini-badge.resolved { background: #F0FDF4; color: #059669; }
+  .mini-card-wrap { opacity: 1; }
+  .mini-card-wrap.resolved-card .mini-img-wrap { opacity: .4; }
+
+  .mini-content { padding: 8px; }
+  .mini-title {
+    font-size: 12px; font-weight: 500; color: var(--text-primary);
+    margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mini-time { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+  .delete-btn {
+    background: #FEF2F2; border: none; border-radius: 4px;
+    padding: 4px 8px; font-size: 10px; font-weight: 600;
+    color: var(--danger); cursor: pointer;
+  }
+  .delete-btn:hover { background: #FEE2E2; }
+
+  .empty-state { text-align: center; padding: 40px 16px; }
+  .empty-state p { font-size: 15px; color: var(--text-secondary); }
+</style>
+
+<!-- Header -->
+<div class="profile-header">
+  <div class="profile-avatar-wrap">
+    <div class="profile-avatar" id="profileAvatar">
+      {{ user.name[0]|upper if user.name else 'U' }}
+    </div>
+    <span class="edit-badge">Edit</span>
+  </div>
+  <div class="profile-info">
+    <div class="profile-name-row">
+      <span class="profile-name">{{ user.name or 'User' }}</span>
+      {% if user.is_admin %}
+      <span class="admin-badge">ADMIN</span>
       {% endif %}
     </div>
-    <div class="profile-info">
-      <div class="profile-name">
-        {{ user.name }}
-        {% if user.is_admin %}
-          <span class="badge badge-admin" style="font-size:10px;">ADMIN</span>
-        {% endif %}
-      </div>
-      <div class="profile-email">{{ user.email }}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        {% set local = user.email.split('@')[0] %}
-        {% if local[-4:].isdigit() %}
-          <span class="badge badge-student">Student</span>
+    <p class="profile-email">{{ user.email or '' }}</p>
+  </div>
+</div>
+
+<!-- Sign out -->
+<form action="/logout" method="post">
+  <button type="submit" class="signout-btn">Sign Out</button>
+</form>
+
+<div style="height:1px;background:var(--border);margin:0 0 16px"></div>
+
+<p class="section-title">My Posts</p>
+
+{% if posts %}
+<div class="posts-grid">
+  {% for post in posts %}
+  {% set isLost     = post.postType == 'lost' %}
+  {% set isResolved = post.status == 'resolved' %}
+  <div class="mini-card-wrap {{ 'resolved-card' if isResolved }}">
+    <a class="mini-card" href="/post/{{ post.id }}">
+      <div class="mini-img-wrap">
+        {% if post.imageUrl or (post.imageUrls and post.imageUrls|length > 0) %}
+        <img class="mini-img" src="{{ (post.imageUrls[0] if post.imageUrls else post.imageUrl) }}" alt="" loading="lazy" />
         {% else %}
-          <span class="badge badge-faculty">Faculty / Staff</span>
+        <div class="mini-no-img">No Image</div>
         {% endif %}
+        <span class="mini-badge {{ 'resolved' if isResolved else ('lost' if isLost else 'found') }}">
+          {{ 'Resolved' if isResolved else ('Lost' if isLost else 'Found') }}
+        </span>
       </div>
-    </div>
-  </div>
-
-  <!-- STATS -->
-  <div class="stats-row">
-    <div class="stat-item">
-      <div class="stat-value">{{ stats.total }}</div>
-      <div class="stat-label">Total</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value" style="color:var(--lost-text);">{{ stats.lost }}</div>
-      <div class="stat-label">Lost</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value" style="color:var(--found-text);">{{ stats.found }}</div>
-      <div class="stat-label">Found</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value" style="color:#059669;">{{ stats.resolved }}</div>
-      <div class="stat-label">Resolved</div>
-    </div>
-  </div>
-
-  <!-- SIGN OUT -->
-  <form method="POST" action="/logout">
-    <button type="submit" class="signout-btn">Sign Out</button>
-  </form>
-
-  <!-- MY POSTS -->
-  <div class="section-title">My Posts</div>
-
-  {% if posts %}
-  <div class="posts-grid" id="posts-grid">
-    {% for p in posts %}
-    {% set is_resolved = p.status == 'resolved' %}
-    {% set is_lost = p.postType == 'lost' %}
-    {% set thumb = (p.imageUrls[0] if p.imageUrls else p.imageUrl) %}
-    <div class="mini-card {{ 'resolved' if is_resolved }}" id="card-{{ p.id }}">
-      <div class="mini-img-wrap" onclick="location.href='/post/{{ p.id }}'">
-        {% if thumb %}
-          <img src="{{ thumb }}" alt="{{ p.title }}" loading="lazy" />
-        {% else %}
-          <div class="mini-no-img">📦</div>
-        {% endif %}
-        {% if is_resolved %}
-          <span class="mini-badge mini-badge-resolved">✓ Resolved</span>
-        {% elif is_lost %}
-          <span class="mini-badge mini-badge-lost">Lost</span>
-        {% else %}
-          <span class="mini-badge mini-badge-found">Found</span>
-        {% endif %}
+      <div class="mini-content">
+        <p class="mini-title">{{ post.title or '' }}</p>
+        <p class="mini-time" data-ts="{{ post.createdAt or '' }}">{{ post.createdAt[:10] if post.createdAt else '' }}</p>
+        <button class="delete-btn" onclick="event.preventDefault();deletePost('{{ post.id }}', this)">Delete</button>
       </div>
-      <div class="mini-body">
-        <div class="mini-title" onclick="location.href='/post/{{ p.id }}'">{{ p.title or 'Untitled' }}</div>
-        <div class="mini-time" id="t-{{ p.id }}">—</div>
-        <button class="mini-delete" onclick="deletePost('{{ p.id }}', this)">Delete</button>
-      </div>
-    </div>
-    {% endfor %}
+    </a>
   </div>
-  {% else %}
-  <div class="empty-state">
-    <div class="empty-icon">📭</div>
-    <h3>No posts yet</h3>
-    <p>Be the first to report a lost or found item!</p>
-  </div>
-  {% endif %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>You haven't posted anything yet.</p>
+</div>
+{% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // Render time-ago for each post
-  const postTimes = {
-    {% for p in posts %}
-    "{{ p.id }}": {{ p.createdAt | tojson }},
-    {% endfor %}
-  };
-  Object.entries(postTimes).forEach(([id, ts]) => {
-    const el = document.getElementById('t-' + id);
-    if (el && ts) el.textContent = timeAgo(ts);
+  // Set profile photo from Firebase
+  window.addEventListener('firebase-ready', () => {
+    const { auth } = window._fb;
+    const user = auth.currentUser;
+    if (user?.photoURL) {
+      document.getElementById('profileAvatar').innerHTML =
+        `<img src="${user.photoURL}" alt="" />`;
+    }
+  });
+
+  // Relative timestamps
+  document.querySelectorAll('[data-ts]').forEach(el => {
+    const ts = el.dataset.ts;
+    if (ts) el.textContent = timeAgo(ts);
   });
 
   // Delete post
-  async function deletePost(id, btn) {
+  function deletePost(postId, btn) {
     if (!confirm('Delete this post?')) return;
-    btn.disabled = true;
-    try {
-      const res = await fetch(`/post/${id}/delete`, { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        document.getElementById('card-' + id)?.remove();
-        showToast('Deleted');
-      } else {
-        showToast(data.error || 'Failed');
-        btn.disabled = false;
-      }
-    } catch {
-      showToast('Failed to delete');
-      btn.disabled = false;
-    }
+    fetch(`/post/${postId}/delete`, { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          btn.closest('.mini-card-wrap').remove();
+          showToast('Post deleted');
+        } else showToast('Error deleting post');
+      });
   }
   window.deletePost = deletePost;
 </script>
