@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+{% block title %}Admin Panel · Lost & Found{% endblock %}
+
+{% block head %}
+<style>
+  .admin-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+  }
+
+  /* ── STATS STRIP ─────────────────────────────────────────────────── */
+  .stats-strip {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .stats-strip::-webkit-scrollbar { display: none; }
+  .stat-card {
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+    padding: 8px 14px;
+    min-width: 64px;
+    text-align: center;
+    flex-shrink: 0;
+    border-left: 3px solid transparent;
+  }
+  .stat-card-val  { font-size: 18px; font-weight: 800; }
+  .stat-card-lbl  { font-size: 10px; font-weight: 600; color: var(--text-secondary); margin-top: 1px; }
+
+  /* ── TAB SWITCHER ────────────────────────────────────────────────── */
+  .tab-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: var(--radius-lg);
+    background: var(--surface-alt);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+  }
+  .tab-btn.active { background: var(--primary); color: #fff; }
+
+  /* ── FILTER BAR ──────────────────────────────────────────────────── */
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    overflow-x: auto;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .fbar-btn {
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    background: var(--surface-alt);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    transition: all .15s;
+  }
+  .fbar-btn.active { background: var(--primary); color: #fff; }
+
+  /* ── SEARCH ──────────────────────────────────────────────────────── */
+  .admin-search {
+    padding: 10px 16px;
+    background: var(--surface);
+  }
+  .admin-search input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    padding: 9px 14px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .admin-search input:focus { border-color: var(--success); }
+
+  /* ── POST LIST ───────────────────────────────────────────────────── */
+  .posts-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .admin-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow .12s;
+  }
+  .admin-card:hover { box-shadow: var(--shadow-md); }
+  .admin-card.resolved { opacity: .65; }
+
+  .admin-card-main {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    cursor: pointer;
+    align-items: center;
+  }
+  .admin-thumb {
+    width: 70px; height: 70px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+    background: var(--surface-alt);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: var(--text-muted);
+    overflow: hidden;
+  }
+  .admin-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .admin-info { flex: 1; overflow: hidden; }
+  .admin-badges { display: flex; gap: 4px; margin-bottom: 3px; }
+  .admin-title {
+    font-size: 14px; font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .admin-author { font-size: 12px; color: var(--text-secondary); }
+  .admin-time   { font-size: 11px; color: var(--text-muted); }
+
+  .admin-actions {
+    display: flex;
+    border-top: 1px solid var(--border-light);
+  }
+  .admin-action-btn {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    background: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .admin-action-btn:first-child { border-right: 1px solid var(--border-light); }
+  .admin-action-btn:hover { background: var(--surface-alt); }
+  .btn-resolve-text { color: var(--success-dark); }
+  .btn-delete-text  { color: var(--danger); }
+
+  /* ── TAB CONTENT ─────────────────────────────────────────────────── */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── SETTINGS ────────────────────────────────────────────────────── */
+  .settings-section {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .settings-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .settings-desc  { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+  .admin-email-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-alt);
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .info-notice {
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .info-notice code {
+    background: var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="stat-card" style="border-left-color:var(--primary);">
+      <div class="stat-card-val" style="color:var(--primary);">{{ stats.total }}</div>
+      <div class="stat-card-lbl">Total</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--lost-text);">
+      <div class="stat-card-val" style="color:var(--lost-text);">{{ stats.lost }}</div>
+      <div class="stat-card-lbl">Lost</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--found-text);">
+      <div class="stat-card-val" style="color:var(--found-text);">{{ stats.found }}</div>
+      <div class="stat-card-lbl">Found</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#F97316;">
+      <div class="stat-card-val" style="color:#F97316;">{{ stats.active }}</div>
+      <div class="stat-card-lbl">Active</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--found-text);">
+      <div class="stat-card-val" style="color:var(--found-text);">{{ stats.resolved }}</div>
+      <div class="stat-card-lbl">Resolved</div>
+    </div>
+    <div class="stat-card" style="border-left-color:#8B5CF6;">
+      <div class="stat-card-val" style="color:#8B5CF6;">{{ stats.users }}</div>
+      <div class="stat-card-lbl">Users</div>
+    </div>
+  </div>
+
+  <!-- TAB SWITCHER -->
+  <div class="tab-row">
+    <button class="tab-btn active" id="tab-posts-btn" onclick="switchTab('posts')">📄 Posts</button>
+    <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+  </div>
+
+  <!-- POSTS TAB -->
+  <div class="tab-content active" id="tab-posts">
+    <!-- Filter -->
+    <div class="filter-bar">
+      <button class="fbar-btn active" data-f="all"      onclick="setAdminFilter(this)">All</button>
+      <button class="fbar-btn"        data-f="lost"     onclick="setAdminFilter(this)">Lost</button>
+      <button class="fbar-btn"        data-f="found"    onclick="setAdminFilter(this)">Found</button>
+      <button class="fbar-btn"        data-f="resolved" onclick="setAdminFilter(this)">Resolved</button>
+      <button class="fbar-btn"        data-f="active"   onclick="setAdminFilter(this)">Active</button>
+    </div>
+    <!-- Search -->
+    <div class="admin-search">
+      <input type="text" id="admin-search" placeholder="Search by title or author…" oninput="renderAdminPosts()" autocomplete="off" />
+    </div>
+    <!-- List -->
+    <div class="posts-list" id="admin-posts-list"></div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab-content" id="tab-settings">
+    <div class="settings-section">
+      <div class="settings-title">Admin Access</div>
+      <div class="settings-desc">Emails with admin access are set in <code>app.py</code> → <code>ADMIN_EMAILS</code>.</div>
+      <div class="info-notice">
+        To add or remove admin accounts, edit the <code>ADMIN_EMAILS</code> list in <code>app.py</code> and restart the server.
+        This keeps admin access server-controlled and secure.
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-title">Allowed Extra Emails</div>
+      <div class="settings-desc">Non-Chadwick emails allowed to sign in are set in <code>ALLOWED_EXTRA_EMAILS</code> in <code>app.py</code>.</div>
+      <div class="info-notice">
+        To allow a guest or parent account, add their email to <code>ALLOWED_EXTRA_EMAILS</code> in <code>app.py</code>.
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-title">Database</div>
+      <div class="settings-desc">Firebase project: <code>{{ firebase_cfg | fromjson_attr('projectId') }}</code></div>
+      <div class="info-notice">
+        All posts are stored in Firestore under the <code>posts</code> collection.
+        To switch to the school's Firebase project, replace <code>dolphin-service-account.json</code>
+        and update <code>FIREBASE_CONFIG</code> in <code>app.py</code>.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── POSTS DATA ──────────────────────────────────────────────────────
+  const ALL_POSTS = {{ posts | tojson }};
+  let adminFilter = 'all';
+  let adminPostStates = {};  // track in-memory status changes
+
+  ALL_POSTS.forEach(p => { adminPostStates[p.id] = p.status; });
+
+  function switchTab(tab) {
+    ['posts','settings'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+      document.getElementById('tab-' + t + '-btn').classList.toggle('active', t === tab);
+    });
+  }
+  window.switchTab = switchTab;
+
+  function setAdminFilter(btn) {
+    adminFilter = btn.dataset.f;
+    document.querySelectorAll('.fbar-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAdminPosts();
+  }
+  window.setAdminFilter = setAdminFilter;
+
+  function renderAdminPosts() {
+    const q = document.getElementById('admin-search').value.toLowerCase().trim();
+    const list = document.getElementById('admin-posts-list');
+    const filtered = ALL_POSTS.filter(p => {
+      const status = adminPostStates[p.id] || p.status;
+      if (adminFilter === 'lost'     && p.postType !== 'lost')    return false;
+      if (adminFilter === 'found'    && p.postType !== 'found')   return false;
+      if (adminFilter === 'resolved' && status !== 'resolved')    return false;
+      if (adminFilter === 'active'   && status === 'resolved')    return false;
+      if (!q) return true;
+      return (p.title || '').toLowerCase().includes(q) ||
+             (p.authorName || '').toLowerCase().includes(q) ||
+             (p.authorEmail || '').toLowerCase().includes(q);
+    });
+
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><h3>No posts match</h3></div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(p => {
+      const status  = adminPostStates[p.id] || p.status;
+      const isLost  = p.postType === 'lost';
+      const isRes   = status === 'resolved';
+      const thumb   = p.imageUrls?.[0] || p.imageUrl;
+      const ts      = p.createdAt ? timeAgo(p.createdAt) : '';
+
+      return `
+        <div class="admin-card ${isRes ? 'resolved' : ''}" id="acard-${p.id}">
+          <div class="admin-card-main" onclick="location.href='/post/${p.id}'">
+            <div class="admin-thumb">
+              ${thumb ? `<img src="${esc(thumb)}" />` : '📦'}
+            </div>
+            <div class="admin-info">
+              <div class="admin-badges">
+                <span class="badge ${isLost ? 'badge-lost' : 'badge-found'}" style="font-size:9px;">
+                  ${isLost ? 'LOST' : 'FOUND'}
+                </span>
+                ${isRes ? '<span class="badge badge-resolved" style="font-size:9px;">Resolved</span>' : ''}
+              </div>
+              <div class="admin-title">${esc(p.title || 'Untitled')}</div>
+              <div class="admin-author">by ${esc(p.authorName || 'Unknown')}</div>
+              <div class="admin-time">${esc(ts)}</div>
+            </div>
+          </div>
+          <div class="admin-actions">
+            <button class="admin-action-btn" onclick="adminToggleResolve('${p.id}')">
+              <span id="res-label-${p.id}" class="btn-resolve-text">
+                ${isRes ? '🔄 Reopen' : '✓ Resolve'}
+              </span>
+            </button>
+            <button class="admin-action-btn" onclick="adminDelete('${p.id}', ${JSON.stringify(p.title || '')})">
+              <span class="btn-delete-text">🗑 Delete</span>
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function adminToggleResolve(id) {
+    try {
+      const res = await fetch(`/post/${id}/resolve`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        adminPostStates[id] = data.status;
+        const lbl = document.getElementById('res-label-' + id);
+        if (lbl) lbl.textContent = data.status === 'resolved' ? '🔄 Reopen' : '✓ Resolve';
+        document.getElementById('acard-' + id)?.classList.toggle('resolved', data.status === 'resolved');
+        showToast(data.status === 'resolved' ? 'Marked resolved ✓' : 'Reopened');
+      }
+    } catch { showToast('Failed'); }
+  }
+  window.adminToggleResolve = adminToggleResolve;
+
+  async function adminDelete(id, title) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/post/${id}/delete`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('acard-' + id)?.remove();
+        showToast('Deleted');
+      }
+    } catch { showToast('Failed to delete'); }
+  }
+  window.adminDelete = adminDelete;
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  renderAdminPosts();
+</script>
+{% endblock %}

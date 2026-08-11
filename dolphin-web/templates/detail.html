@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title or 'Post' }} · Lost & Found{% endblock %}
+
+{% block head %}
+<style>
+  .detail-page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding-bottom: 120px;
+  }
+
+  /* ── IMAGE GALLERY ─────────────────────────────────────────────────── */
+  .gallery {
+    position: relative;
+    background: var(--surface-alt);
+    overflow: hidden;
+  }
+  .gallery-track {
+    display: flex;
+    transition: transform .35s ease;
+    height: 360px;
+  }
+  .gallery-slide {
+    min-width: 100%;
+    cursor: zoom-in;
+  }
+  .gallery-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .gallery-no-image {
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    background: var(--surface-alt);
+    color: var(--text-muted);
+  }
+  .gallery-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    user-select: none;
+  }
+  .gallery-btn-prev { left: 12px; }
+  .gallery-btn-next { right: 12px; }
+  .gallery-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 5px;
+    z-index: 10;
+  }
+  .gallery-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+  }
+  .gallery-dot.active { background: #fff; transform: scale(1.3); }
+  .gallery-badge-lost {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    background: var(--lost-bg);
+    color: var(--lost-text);
+    font-size: 12px;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    z-index: 10;
+  }
+  .gallery-badge-found {
+    position: absolute;
+    bottom: 14px;
+    left: 14px;
+    background: var(--found-bg);
+    color: var(--found-text);
+    font-size: 12px;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    z-index: 10;
+  }
+  .gallery-resolved {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #ECFDF5;
+    color: #059669;
+    border: 1px solid #A7F3D0;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    z-index: 10;
+    display: none;
+  }
+  .gallery-counter {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    z-index: 10;
+  }
+
+  /* ── AUTHOR ROW ────────────────────────────────────────────────────── */
+  .author-row {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    gap: 12px;
+    background: var(--surface);
+  }
+  .author-avatar {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .author-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .author-email { font-size: 11px; color: var(--text-muted); }
+  .author-meta { flex: 1; overflow: hidden; }
+  .author-time { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+
+  /* ── CONTENT SECTIONS ─────────────────────────────────────────────── */
+  .section { padding: 16px; background: var(--surface); }
+  .post-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    margin-bottom: 10px;
+  }
+  .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag-chip {
+    background: #F0FDF4;
+    color: #059669;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+  }
+
+  .info-grid { display: flex; flex-direction: column; gap: 10px; }
+
+  .section-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .description-text {
+    font-size: 15px;
+    color: var(--text-primary);
+    line-height: 1.65;
+  }
+
+  /* ── BOTTOM ACTION BAR ────────────────────────────────────────────── */
+  .action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border-light);
+    padding: 12px 16px 24px;
+    display: flex;
+    gap: 10px;
+    z-index: 200;
+  }
+  .action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    border-radius: var(--radius-lg);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+  }
+  .action-btn-resolve { background: var(--success-dark); color: #fff; }
+  .action-btn-resolve:hover  { background: #047857; }
+  .action-btn-resolve.is-resolved { background: #94A3B8; }
+  .action-btn-message { background: #0EA5E9; color: #fff; }
+  .action-btn-message:hover { background: #0284C7; }
+  .action-btn-delete  { background: var(--lost-bg); color: var(--danger); border: 1px solid #FECACA; }
+  .action-btn-delete:hover  { background: #FEE2E2; }
+  .action-btn-back    { background: var(--surface-alt); color: var(--text-primary); border: 1px solid var(--border); }
+  .action-btn-back:hover { background: var(--border); }
+
+  /* ── LIGHTBOX ─────────────────────────────────────────────────────── */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 100%;
+    max-height: 100vh;
+    object-fit: contain;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 16px;
+    font-size: 28px;
+    color: #fff;
+    cursor: pointer;
+    background: rgba(255,255,255,0.15);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-prev, .lightbox-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 24px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .lightbox-prev { left: 16px; }
+  .lightbox-next { right: 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set post = post %}
+{% set user = user %}
+{% set images = post.imageUrls if post.imageUrls else ([post.imageUrl] if post.imageUrl else []) %}
+
+<div class="detail-page">
+  <!-- GALLERY -->
+  <div class="gallery" id="gallery">
+    {% if images %}
+    <div class="gallery-track" id="gallery-track">
+      {% for img in images %}
+      <div class="gallery-slide" onclick="openLightbox({{ loop.index0 }})">
+        <img src="{{ img }}" alt="{{ post.title }}" />
+      </div>
+      {% endfor %}
+    </div>
+    {% if images|length > 1 %}
+    <div class="gallery-btn gallery-btn-prev" onclick="prevSlide()">‹</div>
+    <div class="gallery-btn gallery-btn-next" onclick="nextSlide()">›</div>
+    <div class="gallery-dots" id="gallery-dots">
+      {% for img in images %}
+      <div class="gallery-dot {{ 'active' if loop.first }}" onclick="goToSlide({{ loop.index0 }})"></div>
+      {% endfor %}
+    </div>
+    <div class="gallery-counter" id="gallery-counter">1 / {{ images|length }}</div>
+    {% endif %}
+    {% else %}
+    <div class="gallery-no-image">📦</div>
+    {% endif %}
+
+    <!-- Badges over image -->
+    {% if post.postType == 'lost' %}
+    <div class="gallery-badge-lost">Lost</div>
+    {% else %}
+    <div class="gallery-badge-found">Found</div>
+    {% endif %}
+    <div class="gallery-resolved" id="resolved-badge" style="{{ 'display:block' if post.status == 'resolved' else '' }}">✓ Resolved</div>
+  </div>
+
+  <!-- AUTHOR ROW -->
+  <div class="author-row">
+    <div class="author-avatar" id="author-avatar">{{ (post.authorName or 'U')[0]|upper }}</div>
+    <div class="author-meta">
+      <div class="author-name">{{ post.authorName or 'Unknown' }}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+        <div class="author-email">{{ post.authorEmail or '' }}</div>
+        {% if post.authorEmail %}
+          {% set local = post.authorEmail.split('@')[0] %}
+          {% if local[-4:].isdigit() %}
+            <span class="badge badge-student" style="font-size:9px;padding:2px 6px;">Student</span>
+          {% else %}
+            <span class="badge badge-faculty" style="font-size:9px;padding:2px 6px;">Faculty / Staff</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="author-time" id="post-time">—</div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- TITLE + TAGS -->
+  <div class="section">
+    <div class="post-title">{{ post.title or 'Untitled' }}</div>
+    {% if post.tags %}
+    <div class="tags-row">
+      {% for tag in post.tags %}
+      <span class="tag-chip">#{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="divider"></div>
+
+  <!-- INFO CARDS -->
+  <div class="section">
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon" style="background:#EEF2FF;">📍</div>
+        <div>
+          <div class="info-label">Location</div>
+          <div class="info-value">{{ post.location or 'Not specified' }}</div>
+        </div>
+      </div>
+
+      {% if post.dropOffLocation %}
+      <div class="info-card">
+        <div class="info-icon" style="background:#ECFDF5;">⬇️</div>
+        <div>
+          <div class="info-label">Dropped off at</div>
+          <div class="info-value">{{ post.dropOffLocation }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if post.eventDate %}
+      <div class="info-card">
+        <div class="info-icon" style="background:#F0FDF4;">📅</div>
+        <div>
+          <div class="info-label">{{ 'Date Lost' if post.postType == 'lost' else 'Date Found' }}</div>
+          <div class="info-value" id="event-date">—</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if post.color %}
+      <div class="info-card">
+        <div class="info-icon" style="background:#FEF3C7;">🎨</div>
+        <div>
+          <div class="info-label">Color</div>
+          <div class="info-value">{{ post.color }}</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <!-- DESCRIPTION -->
+  <div class="section">
+    <div class="section-label">Description</div>
+    <div class="description-text">{{ post.description or 'No description provided.' }}</div>
+  </div>
+</div>
+
+<!-- ACTION BAR -->
+<div class="action-bar">
+  {% if user %}
+    {% set is_owner = user.uid == post.authorId %}
+    {% set is_admin = user.is_admin %}
+
+    {% if is_owner or is_admin %}
+      <button
+        class="action-btn action-btn-resolve {{ 'is-resolved' if post.status == 'resolved' else '' }}"
+        id="resolve-btn"
+        onclick="toggleResolve()"
+      >
+        {{ '🔄 Reopen Post' if post.status == 'resolved' else '✓ Mark Resolved' }}
+      </button>
+      <button class="action-btn action-btn-delete" onclick="confirmDelete()">🗑 Delete</button>
+    {% else %}
+      <button class="action-btn action-btn-back" onclick="history.back()">← Back</button>
+    {% endif %}
+  {% else %}
+    <button class="action-btn action-btn-back" onclick="window.location='/login'">Sign in to interact</button>
+  {% endif %}
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+  <div class="lightbox-prev" onclick="lightboxPrev()" id="lb-prev">‹</div>
+  <img src="" id="lightbox-img" />
+  <div class="lightbox-next" onclick="lightboxNext()" id="lb-next">›</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const POST_ID   = {{ post.id | tojson }};
+  const POST_JSON = {{ post_json | safe }};
+  const images    = POST_JSON.imageUrls?.length ? POST_JSON.imageUrls
+                  : POST_JSON.imageUrl ? [POST_JSON.imageUrl] : [];
+
+  // ── Time display ───────────────────────────────────────────────────
+  const ts = POST_JSON.createdAt;
+  if (ts) document.getElementById('post-time').textContent = timeAgo(ts);
+
+  {% if post.eventDate %}
+  (function() {
+    const d = new Date("{{ post.eventDate }}");
+    const opts = { weekday: 'short', month: 'short', day: 'numeric' };
+    let label = d.toLocaleDateString('en-US', opts);
+    {% if post.eventTime == 'unknown' %}
+    label += ' (Time unknown)';
+    {% else %}
+    label += ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    {% endif %}
+    const el = document.getElementById('event-date');
+    if (el) el.textContent = label;
+  })();
+  {% endif %}
+
+  // ── Author photo ───────────────────────────────────────────────────
+  window.addEventListener('firebase-ready', async () => {
+    const authorId = POST_JSON.authorId;
+    const photo    = POST_JSON.authorPhoto;
+    if (photo) {
+      setAuthorPhoto(photo);
+      return;
+    }
+    if (!authorId) return;
+    try {
+      const { doc, getDoc } = await import(
+        'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js'
+      );
+      const snap = await getDoc(doc(window._fb.firestore, 'users', authorId));
+      if (snap.exists() && snap.data().photoURL) setAuthorPhoto(snap.data().photoURL);
+    } catch {}
+  });
+  function setAuthorPhoto(url) {
+    const el = document.getElementById('author-avatar');
+    el.innerHTML = `<img src="${url}" alt="author" />`;
+  }
+
+  // ── Gallery ────────────────────────────────────────────────────────
+  let slideIdx = 0;
+  function goToSlide(i) {
+    slideIdx = i;
+    const track = document.getElementById('gallery-track');
+    if (track) track.style.transform = `translateX(-${i * 100}%)`;
+    document.querySelectorAll('.gallery-dot').forEach((d, idx) => {
+      d.classList.toggle('active', idx === i);
+    });
+    const counter = document.getElementById('gallery-counter');
+    if (counter) counter.textContent = `${i + 1} / ${images.length}`;
+  }
+  function prevSlide() { goToSlide(slideIdx > 0 ? slideIdx - 1 : images.length - 1); }
+  function nextSlide() { goToSlide(slideIdx < images.length - 1 ? slideIdx + 1 : 0); }
+  window.goToSlide = goToSlide; window.prevSlide = prevSlide; window.nextSlide = nextSlide;
+
+  // Swipe support
+  let touchStartX = 0;
+  const gallery = document.getElementById('gallery');
+  if (gallery) {
+    gallery.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    gallery.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40) dx < 0 ? nextSlide() : prevSlide();
+    }, { passive: true });
+  }
+
+  // ── Lightbox ───────────────────────────────────────────────────────
+  let lbIdx = 0;
+  function openLightbox(i) {
+    lbIdx = i;
+    document.getElementById('lightbox-img').src = images[i];
+    document.getElementById('lightbox').classList.add('open');
+    document.getElementById('lb-prev').style.display = images.length > 1 ? '' : 'none';
+    document.getElementById('lb-next').style.display = images.length > 1 ? '' : 'none';
+  }
+  function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+  function lightboxPrev() { lbIdx = lbIdx > 0 ? lbIdx - 1 : images.length - 1; document.getElementById('lightbox-img').src = images[lbIdx]; }
+  function lightboxNext() { lbIdx = lbIdx < images.length - 1 ? lbIdx + 1 : 0; document.getElementById('lightbox-img').src = images[lbIdx]; }
+  window.openLightbox = openLightbox; window.closeLightbox = closeLightbox;
+  window.lightboxPrev = lightboxPrev; window.lightboxNext = lightboxNext;
+  document.getElementById('lightbox')?.addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+
+  // ── Resolve toggle ─────────────────────────────────────────────────
+  let currentStatus = {{ post.status | tojson }};
+  async function toggleResolve() {
+    const btn = document.getElementById('resolve-btn');
+    btn.disabled = true;
+    try {
+      const res = await fetch(`/post/${POST_ID}/resolve`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        currentStatus = data.status;
+        const resolved = currentStatus === 'resolved';
+        btn.textContent = resolved ? '🔄 Reopen Post' : '✓ Mark Resolved';
+        btn.classList.toggle('is-resolved', resolved);
+        const badge = document.getElementById('resolved-badge');
+        if (badge) badge.style.display = resolved ? 'block' : 'none';
+        showToast(resolved ? 'Marked as resolved ✓' : 'Post reopened');
+      }
+    } catch (e) {
+      showToast('Failed to update status');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  window.toggleResolve = toggleResolve;
+
+  // ── Delete ─────────────────────────────────────────────────────────
+  function confirmDelete() {
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    fetch(`/post/${POST_ID}/delete`, { method: 'POST' })
+      .then(r => r.json())
+      .then(d => { if (d.success) window.location = '/'; })
+      .catch(() => showToast('Failed to delete'));
+  }
+  window.confirmDelete = confirmDelete;
+</script>
+{% endblock %}

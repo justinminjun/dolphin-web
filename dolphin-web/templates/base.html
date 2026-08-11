@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Lost & Found · Chadwick International{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ── CSS VARIABLES (from CI Dolphin theme.ts) ─────────────────────────── */
+    :root {
+      --primary:        #0C2340;
+      --primary-light:  #1A3A5C;
+      --primary-dark:   #061729;
+      --accent:         #C9A96E;
+      --success:        #10B981;
+      --success-dark:   #059669;
+      --danger:         #EF4444;
+      --danger-dark:    #DC2626;
+      --warning:        #F97316;
+
+      --bg:             #F5F7FA;
+      --surface:        #FFFFFF;
+      --surface-alt:    #EDF1F7;
+      --border:         #D8DFE9;
+      --border-light:   #EDF1F7;
+
+      --text-primary:   #0C2340;
+      --text-secondary: #4A5E78;
+      --text-muted:     #8A9BB5;
+
+      --tag-bg:         #E8EDF4;
+      --tag-text:       #0C2340;
+      --lost-bg:        #FEF2F2;
+      --lost-text:      #DC2626;
+      --found-bg:       #ECFDF5;
+      --found-text:     #059669;
+
+      --radius-sm:  6px;
+      --radius-md:  10px;
+      --radius-lg:  14px;
+      --radius-xl:  20px;
+      --radius-full: 999px;
+
+      --shadow-sm:  0 1px 3px rgba(12,35,64,0.06);
+      --shadow-md:  0 4px 12px rgba(12,35,64,0.10);
+      --shadow-lg:  0 8px 24px rgba(12,35,64,0.14);
+
+      --nav-h: 60px;
+    }
+
+    /* ── RESET ────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding-top: var(--nav-h);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    img { display: block; max-width: 100%; }
+    input, select, textarea {
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--surface);
+    }
+
+    /* ── NAVIGATION ───────────────────────────────────────────────────────── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 12px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(6,23,41,0.3);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .nav-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.2px;
+    }
+    .nav-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      font-weight: 500;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-report {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--success);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      transition: background .15s;
+    }
+    .btn-report:hover { background: var(--success-dark); }
+    .btn-report svg { width: 16px; height: 16px; }
+    .nav-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.4);
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; color: #fff;
+      cursor: pointer;
+      position: relative;
+    }
+    .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .nav-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      min-width: 180px;
+      overflow: hidden;
+      display: none;
+      z-index: 2000;
+    }
+    .nav-dropdown.open { display: block; }
+    .nav-dropdown a, .nav-dropdown button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      transition: background .12s;
+      text-align: left;
+    }
+    .nav-dropdown a:hover, .nav-dropdown button:hover { background: var(--surface-alt); }
+    .nav-dropdown .dd-divider { height: 1px; background: var(--border); }
+    .nav-dropdown .dd-danger { color: var(--danger); }
+    .btn-signin {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(255,255,255,0.3);
+      transition: background .15s;
+    }
+    .btn-signin:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── BADGES ───────────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .badge-lost    { background: var(--lost-bg);  color: var(--lost-text); }
+    .badge-found   { background: var(--found-bg); color: var(--found-text); }
+    .badge-resolved {
+      background: #ECFDF5;
+      color: #059669;
+      border: 1px solid #A7F3D0;
+    }
+    .badge-student { background: #EEF2FF; color: #4338CA; }
+    .badge-faculty { background: #FEF3C7; color: #D97706; }
+    .badge-admin   { background: #1E1B4B; color: #C4B5FD; }
+
+    /* ── BUTTONS ──────────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: var(--radius-lg);
+      font-size: 15px;
+      font-weight: 700;
+      transition: all .15s;
+      cursor: pointer;
+    }
+    .btn-primary   { background: var(--primary);  color: #fff; }
+    .btn-primary:hover  { background: var(--primary-light); }
+    .btn-success   { background: var(--success-dark); color: #fff; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger    { background: var(--danger);   color: #fff; }
+    .btn-danger:hover { background: var(--danger-dark); }
+    .btn-ghost {
+      background: var(--surface-alt);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+
+    /* ── CARDS ────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    /* ── FORM ELEMENTS ────────────────────────────────────────────────────── */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--success);
+      letter-spacing: 0.2px;
+    }
+    .form-input, .form-select, .form-textarea {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      font-size: 15px;
+      color: var(--text-primary);
+      background: var(--surface);
+      transition: border-color .15s;
+      outline: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--success);
+    }
+    .form-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+    .form-input::placeholder, .form-textarea::placeholder { color: var(--text-muted); }
+
+    /* ── INFO CARD (detail page) ──────────────────────────────────────────── */
+    .info-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #F8FAFC;
+      border-radius: var(--radius-lg);
+      padding: 12px;
+    }
+    .info-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .info-label { font-size: 11px; color: var(--text-muted); }
+    .info-value { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+    /* ── SPINNER ──────────────────────────────────────────────────────────── */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── DIVIDER ──────────────────────────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border-light); margin: 0 16px; }
+
+    /* ── EMPTY STATE ──────────────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 17px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .empty-state p  { font-size: 14px; }
+
+    /* ── TOAST ────────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: var(--radius-full);
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      z-index: 9999;
+      transition: transform .3s ease;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── MODAL OVERLAY ────────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 5000;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--surface);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 20px 20px 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+    .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+    .modal-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      background: #F8FAFC;
+      margin-bottom: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .modal-option:hover { background: var(--surface-alt); }
+    .modal-cancel {
+      background: var(--surface-alt);
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .modal-cancel:hover { background: var(--border); }
+
+    /* ── RESPONSIVE ───────────────────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .nav-title { font-size: 15px; }
+      .nav-sub   { display: none; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ── NAVIGATION ─────────────────────────────────────────────────── -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🐬</div>
+    <div>
+      <div class="nav-title">Lost &amp; Found</div>
+      <div class="nav-sub">Chadwick International</div>
+    </div>
+  </a>
+
+  <div class="nav-actions">
+    {% if user %}
+      <a href="/post/new" class="btn-report">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        Report
+      </a>
+
+      <div style="position:relative;" id="nav-avatar-wrap">
+        <div class="nav-avatar" onclick="toggleDropdown()">
+          {% if user.photo %}
+            <img src="{{ user.photo }}" alt="{{ user.name }}" />
+          {% else %}
+            {{ user.name[0]|upper }}
+          {% endif %}
+        </div>
+        <div class="nav-dropdown" id="nav-dropdown">
+          <a href="/profile">
+            <span>👤</span> Profile
+          </a>
+          {% if user.is_admin %}
+          <a href="/admin">
+            <span>⚙️</span> Admin Panel
+          </a>
+          {% endif %}
+          <div class="dd-divider"></div>
+          <form method="POST" action="/logout">
+            <button type="submit" class="dd-danger">
+              <span>🚪</span> Sign Out
+            </button>
+          </form>
+        </div>
+      </div>
+
+    {% else %}
+      <button class="btn-signin" onclick="window.location='/login'">Sign In</button>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- ── PAGE CONTENT ──────────────────────────────────────────────── -->
+{% block content %}{% endblock %}
+
+<!-- ── TOAST ────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ── FIREBASE SDK ──────────────────────────────────────────────── -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+  import { getAuth }       from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+  import { getFirestore }  from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+  import { getStorage }    from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js';
+
+  const cfg = {{ firebase_cfg|safe }};
+  const firebaseApp = initializeApp(cfg);
+
+  window._fb = {
+    app:       firebaseApp,
+    auth:      getAuth(firebaseApp),
+    firestore: getFirestore(firebaseApp),
+    storage:   getStorage(firebaseApp),
+  };
+
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<!-- ── SHARED JS ─────────────────────────────────────────────────── -->
+<script>
+  function toggleDropdown() {
+    document.getElementById('nav-dropdown').classList.toggle('open');
+  }
+  document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('nav-avatar-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('nav-dropdown')?.classList.remove('open');
+    }
+  });
+
+  function showToast(msg, duration = 2800) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), duration);
+  }
+
+  function timeAgo(isoOrSeconds) {
+    if (!isoOrSeconds) return 'Just now';
+    let date;
+    if (typeof isoOrSeconds === 'number') {
+      date = new Date(isoOrSeconds * 1000);
+    } else {
+      date = new Date(isoOrSeconds);
+    }
+    if (isNaN(date)) return '';
+    const diff = Math.floor((Date.now() - date) / 1000);
+    if (diff < 60)   return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+    return date.toLocaleDateString();
+  }
+
+  function getRoleLabel(email) {
+    if (!email) return 'Student';
+    const local = email.split('@')[0];
+    return /\d{4}$/.test(local) ? 'Student' : 'Faculty / Staff';
+  }
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

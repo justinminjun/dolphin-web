@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+{% block title %}Feed · Lost & Found{% endblock %}
+
+{% block head %}
+<style>
+  /* ── PAGE SHELL ─────────────────────────────────────────────────────── */
+  .feed-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 0 100px;
+  }
+
+  /* ── SEARCH ─────────────────────────────────────────────────────────── */
+  .search-bar {
+    position: sticky;
+    top: var(--nav-h);
+    background: var(--surface);
+    padding: 12px 16px 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .search-input-wrap {
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--surface-alt);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-full);
+    padding: 10px 14px 10px 40px;
+    font-size: 15px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .search-input:focus { border-color: var(--success); }
+  .search-input::placeholder { color: var(--text-muted); }
+
+  /* ── FILTER TABS ─────────────────────────────────────────────────────── */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px 10px;
+    background: var(--surface);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-tab {
+    padding: 6px 16px;
+    border-radius: var(--radius-full);
+    background: var(--surface-alt);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all .15s;
+    flex-shrink: 0;
+  }
+  .filter-tab.active {
+    background: var(--primary);
+    color: #fff;
+  }
+  .filter-tab:hover:not(.active) { background: var(--border); }
+
+  /* ── CARD GRID ───────────────────────────────────────────────────────── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    padding: 16px;
+  }
+
+  /* ── POST CARD ───────────────────────────────────────────────────────── */
+  .post-card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    display: flex;
+    flex-direction: column;
+  }
+  .post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .post-card.resolved { opacity: 0.6; }
+
+  .card-image-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 66%; /* ~3:2 aspect ratio */
+    background: var(--surface-alt);
+    overflow: hidden;
+  }
+  .card-image-wrap img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .card-no-image {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: var(--text-muted);
+    background: var(--surface-alt);
+  }
+  .card-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .card-badge-lost   { background: var(--lost-bg);  color: var(--lost-text); }
+  .card-badge-found  { background: var(--found-bg); color: var(--found-text); }
+  .card-resolved-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ECFDF5;
+    color: #059669;
+    border: 1px solid #A7F3D0;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .card-img-count {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+
+  .card-body {
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .card-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 60%;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .card-tag {
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+  .card-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid var(--border-light);
+    padding-top: 8px;
+    margin-top: auto;
+  }
+  .card-avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .card-author-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card-role {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .card-role-student { background: #EEF2FF; color: #4338CA; }
+  .card-role-faculty { background: #FEF3C7; color: #D97706; }
+
+  /* ── FAB ─────────────────────────────────────────────────────────────── */
+  .fab {
+    position: fixed;
+    bottom: 28px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--success-dark);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px 22px;
+    border-radius: 28px;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    z-index: 500;
+    transition: background .15s, transform .15s;
+    text-decoration: none;
+  }
+  .fab:hover { background: #047857; transform: scale(1.04); }
+  .fab svg { width: 20px; height: 20px; }
+
+  /* ── LOADING ─────────────────────────────────────────────────────────── */
+  .feed-loading {
+    display: flex;
+    justify-content: center;
+    padding: 60px;
+  }
+  .feed-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="feed-page">
+  <!-- Search + filters (sticky) -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        class="search-input"
+        type="text"
+        id="search-input"
+        placeholder="Search by name, location, or tag…"
+        oninput="applyFilters()"
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-tab active" data-filter="all"      onclick="setFilter(this)">All</button>
+      <button class="filter-tab"        data-filter="lost"     onclick="setFilter(this)">Lost</button>
+      <button class="filter-tab"        data-filter="found"    onclick="setFilter(this)">Found</button>
+      <button class="filter-tab"        data-filter="resolved" onclick="setFilter(this)">Resolved</button>
+    </div>
+  </div>
+
+  <!-- Card grid -->
+  <div class="card-grid" id="card-grid">
+    <div class="feed-loading" id="feed-loading">
+      <div class="feed-spinner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB -->
+{% if user %}
+  <a href="/post/new" class="fab">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+    </svg>
+    Report
+  </a>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import {
+    collection, query, orderBy, onSnapshot
+  } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+  let allPosts = [];
+  let currentFilter = 'all';
+  let authorPhotoCache = {};
+
+  // Wait for Firebase to be ready
+  function waitFirebase() {
+    return new Promise(r => {
+      if (window._fb) return r();
+      window.addEventListener('firebase-ready', r, { once: true });
+    });
+  }
+
+  async function fetchAuthorPhoto(authorId) {
+    if (!authorId || authorId in authorPhotoCache) return;
+    try {
+      const { doc, getDoc } = await import(
+        'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js'
+      );
+      const snap = await getDoc(doc(window._fb.firestore, 'users', authorId));
+      authorPhotoCache[authorId] = snap.exists() ? (snap.data().photoURL || null) : null;
+    } catch {
+      authorPhotoCache[authorId] = null;
+    }
+  }
+
+  async function init() {
+    await waitFirebase();
+    const q = query(collection(window._fb.firestore, 'posts'), orderBy('createdAt', 'desc'));
+    onSnapshot(q, async snap => {
+      allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Pre-fetch author photos
+      const ids = [...new Set(allPosts.map(p => p.authorId).filter(Boolean))];
+      await Promise.all(ids.map(fetchAuthorPhoto));
+      renderCards();
+      document.getElementById('feed-loading').style.display = 'none';
+    }, err => {
+      document.getElementById('feed-loading').style.display = 'none';
+      document.getElementById('card-grid').innerHTML =
+        '<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Could not load posts</h3><p>' + err.message + '</p></div>';
+    });
+  }
+
+  function setFilter(btn) {
+    currentFilter = btn.dataset.filter;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderCards();
+  }
+  window.setFilter = setFilter;
+
+  function applyFilters() { renderCards(); }
+  window.applyFilters = applyFilters;
+
+  function renderCards() {
+    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    const grid = document.getElementById('card-grid');
+
+    const filtered = allPosts.filter(p => {
+      if (currentFilter === 'lost'     && p.postType !== 'lost')     return false;
+      if (currentFilter === 'found'    && p.postType !== 'found')    return false;
+      if (currentFilter === 'resolved' && p.status   !== 'resolved') return false;
+      if (currentFilter === 'all'      && p.status   === 'resolved') return false;
+      if (!q) return true;
+      return (
+        (p.title       || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q) ||
+        (p.location    || '').toLowerCase().includes(q) ||
+        (p.tags        || []).some(t => t.toLowerCase().includes(q))
+      );
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-icon">${q ? '🔍' : '📦'}</div>
+          <h3>${q ? 'No results for "' + q + '"' : 'No posts yet'}</h3>
+          <p>${q ? 'Try a different search term' : 'Be the first to report a lost or found item!'}</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(p => buildCard(p)).join('');
+  }
+
+  function buildCard(p) {
+    const isLost     = p.postType === 'lost';
+    const isResolved = p.status === 'resolved';
+    const images     = p.imageUrls?.length ? p.imageUrls : (p.imageUrl ? [p.imageUrl] : []);
+    const thumb      = images[0] || null;
+    const role       = getRoleLabel(p.authorEmail || '');
+    const isFaculty  = role !== 'Student';
+    const photo      = authorPhotoCache[p.authorId];
+
+    const ts = p.createdAt?.seconds ? p.createdAt.seconds * 1000
+             : p.createdAt ? new Date(p.createdAt).getTime() : null;
+    const ago = ts ? timeAgo(ts / 1000) : '';
+
+    const avatarHtml = photo
+      ? `<div class="card-avatar"><img src="${photo}" /></div>`
+      : `<div class="card-avatar">${(p.authorName || 'U')[0].toUpperCase()}</div>`;
+
+    const tagsHtml = (p.tags || []).slice(0, 3)
+      .map(t => `<span class="card-tag">#${escHtml(t)}</span>`).join('');
+
+    return `
+      <div class="post-card${isResolved ? ' resolved' : ''}" onclick="location.href='/post/${p.id}'">
+        <div class="card-image-wrap">
+          ${thumb
+            ? `<img src="${escHtml(thumb)}" alt="${escHtml(p.title || '')}" loading="lazy" />`
+            : `<div class="card-no-image">📦</div>`
+          }
+          <span class="card-badge ${isLost ? 'card-badge-lost' : 'card-badge-found'}">${isLost ? 'Lost' : 'Found'}</span>
+          ${isResolved ? `<span class="card-resolved-badge">✓ Resolved</span>` : ''}
+          ${images.length > 1 ? `<span class="card-img-count">${images.length} photos</span>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${escHtml(p.title || 'Untitled')}</div>
+          <div class="card-meta">
+            <span class="card-location">📍 ${escHtml(p.location || 'Unknown location')}</span>
+            <span>${escHtml(ago)}</span>
+          </div>
+          ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+          <div class="card-author">
+            ${avatarHtml}
+            <span class="card-author-name">${escHtml(p.authorName || 'Unknown')}</span>
+            <span class="card-role ${isFaculty ? 'card-role-faculty' : 'card-role-student'}">
+              ${isFaculty ? 'Faculty' : 'Student'}
+            </span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function escHtml(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  init();
+</script>
+{% endblock %}
