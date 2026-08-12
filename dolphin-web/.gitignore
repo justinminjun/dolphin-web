@@ -1,0 +1,30 @@
+# ── SECRET FILES — never commit these ────────────────────────────────
+dolphin-service-account.json
+*.json
+!package.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads (if any local uploads folder)
+static/uploads/
